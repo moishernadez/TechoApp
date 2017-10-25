@@ -6,7 +6,7 @@ Pasos para correr el servicio y la aplicación web asumiendo que que python 2.7 
 	pip install -r requirements.txt
 
 2) Crear una base de datos mongodb con la información de los campamentos. Para ello, ejecutar el archivo load_database.py. Esto puede hacerse en un terminal bash ejecutando el comando:
-	python service.py
+	python load_database.py
 	
 
 3) Ejecutar el servicio. Esto se hace ejecutando el archivo service.py a través del comando:
