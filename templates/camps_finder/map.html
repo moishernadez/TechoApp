@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geolocation</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 80%;
+        margin: 2%;
+        padding: 0;
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  </head>
+  <body>
+  <h1>Campamentos Techo </h1>
+  <div id="ratio_form" hidden =true>
+      <form>
+          Ingrese radio: <br>
+            <input id="ratio" type="text" onkeypress="return entercode(event)">
+            <input type="button" value="buscar campamentos" onclick="findCamps()">
+      </form>
+  </div>
+  <h3 id="mensaje"></h3>
+  <br>
+  <div id="map"></div>
+    <script>
+      // Note: This example requires that you consent to location sharing when
+      // prompted by your browser. If you see the error "The Geolocation service
+      // failed.", it means you probably did not give permission for the browser to
+      // locate you.
+      var map, infoWindow, current_pos;
+      var markersArray = []
+      function initMap() {
+{#          var marker_position = {lat: -33.4487, lng: -70.6650};#}
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -33.4489, lng: -70.6693},
+          zoom: 12
+        });
+
+{#        new google.maps.Marker({position: marker_position, map: map, title: "punto"});#}
+        infoWindow = new google.maps.InfoWindow;
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+          document.getElementById("mensaje").innerHTML = "Cargando posición actual..."
+          navigator.geolocation.getCurrentPosition(function(position) {
+            current_pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+
+            infoWindow.setPosition(current_pos);
+            infoWindow.setContent('Ubicación Actual');
+            infoWindow.open(map);
+            map.setCenter(current_pos);
+            document.getElementById("mensaje").innerHTML = "Posición Actual encontrada";
+            document.getElementById("ratio_form").hidden = false;
+
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+      }
+
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+      }
+      function findCamps(){
+          document.getElementById("mensaje").innerHTML = "Buscando campamentos cercanos...";
+          clearMarkers();
+          var ratio = document.getElementById("ratio").value;
+          var current_pos_lat_absolute_value = -current_pos["lat"];
+          var current_pos_lng_absolute_value = -current_pos["lng"];
+          $.getJSON('http://127.0.0.1:9000/camps/'+ratio+'&'+
+                  current_pos_lat_absolute_value+
+                  '&'+ current_pos_lng_absolute_value, function (data) {
+              for (var i=0; i<data.length; i++){
+                  var lat = data[i]["LATITUD"];
+                  var lng = data[i]["LONGITUD"];
+                  var pos = {lat: lat, lng: lng};
+                  var camp_name = data[i]["Campamento"]
+                  marker = new google.maps.Marker({position:pos, map: map, title: camp_name});
+                  markersArray.push(marker);
+              }
+              document.getElementById("mensaje").innerHTML = "Campamentos cercanos localizados"
+          })
+      }
+      function clearMarkers(){
+          for (var i = 0; i< markersArray.length; i++){
+              markersArray[i].setMap(null)
+          }
+      }
+
+      function entercode(event){
+          if (event.keyCode == 13){
+              findCamps();
+              return false;
+          }
+          return true;
+      }
+    </script>
+
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDV3cQpM4Xc-geFe0q-aTtWYH2WEeQM7hU&callback=initMap">
+    </script>
+  </body>
+</html>
